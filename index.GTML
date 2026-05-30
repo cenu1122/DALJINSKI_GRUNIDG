@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grundig Wi-Fi Daljinski</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .remote-container {
+            background-color: #2d2d2d;
+            padding: 30px;
+            border-radius: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 340px;
+            text-align: center;
+        }
+        h2 { margin-top: 0; color: #00adb5; }
+        input {
+            width: 90%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: none;
+            border-radius: 8px;
+            background-color: #393e46;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+        }
+        .btn {
+            background-color: #393e46;
+            color: white;
+            border: none;
+            padding: 15px;
+            margin: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .btn:active {
+            transform: scale(0.95);
+            background-color: #00adb5 !important;
+        }
+        .btn-power { background-color: #ff2e63; width: 40%; }
+        .btn-mute { background-color: #757575; width: 40%; }
+        .vol-ch-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .column {
+            display: flex;
+            flex-direction: column;
+            width: 45%;
+        }
+        .btn-vol, .btn-ch {
+            height: 60px;
+            background-color: #00adb5;
+        }
+        #status {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #b3b3b3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="remote-container">
+    <h2>Grundig TV Control</h2>
+    
+    <input type="text" id="tvIp" value="192.168.1." placeholder="Unesi IP adresu TV-ja (npr. 192.168.1.50)">
+    
+    <div>
+        <button class="btn btn-power" onclick="sendCmd('1')">🔴 POWER</button>
+        <button class="btn btn-mute" onclick="sendCmd('15')">🔇 MUTE</button>
+    </div>
+
+    <div class="vol-ch-container">
+        <div class="column">
+            <button class="btn btn-vol" onclick="sendCmd('16')">🔊 VOL +</button>
+            <button class="btn btn-vol" onclick="sendCmd('17')">🔉 VOL -</button>
+        </div>
+        <div class="column">
+            <button class="btn btn-ch" onclick="sendCmd('18')">📺 CH +</button>
+            <button class="btn btn-ch" onclick="sendCmd('19')">📺 CH -</button>
+        </div>
+    </div>
+
+    <div id="status">Unesite IP adresu i pritisnite dugme.</div>
+</div>
+
+<script>
+function sendCmd(keyCode) {
+    const ip = document.getElementById('tvIp').value.trim();
+    const statusDiv = document.getElementById('status');
+    
+    if (!ip || ip === "192.168.1.") {
+        statusDiv.innerText = "Greška: Unesite ispravnu IP adresu!";
+        statusDiv.style.color = "#ff2e63";
+        return;
+    }
+
+    statusDiv.innerText = "Slanje komande...";
+    statusDiv.style.color = "#00adb5";
+
+    const url = `http://${ip}:8085/remote`;
+    
+    // Grundig SOAP XML format
+    const soapBody = `<?xml version="1.0" encoding="utf-8"?>
+    <remote>
+        <key state="press">${keyCode}</key>
+    </remote>`;
+
+    // Koristimo standardni JavaScript fetch za slanje zahteva direktno iz pretraživača
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'text/xml; charset=utf-8'
+        },
+        body: soapBody,
+        mode: 'no-cors' // Sprečava CORS blokadu jer TV ne vraća standardna zaglavlja pretraživaču
+    })
+    .then(() => {
+        statusDiv.innerText = "Komanda poslata!";
+        statusDiv.style.color = "#00ff88";
+    })
+    .catch((error) => {
+        statusDiv.innerText = "Greška pri slanju!";
+        statusDiv.style.color = "#ff2e63";
+        console.error(error);
+    });
+}
+</script>
+
+</body>
+</html>
